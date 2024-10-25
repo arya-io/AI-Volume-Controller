@@ -2,25 +2,35 @@ import streamlit as st
 import cv2
 import mediapipe as mp
 from math import hypot
-from ctypes import cast, POINTER
-from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import numpy as np
 import time
+import platform
 
-# Initialize Mediapipe and Audio control
+# Check if the platform is Windows for pycaw compatibility
+is_windows = platform.system() == "Windows"
+if is_windows:
+    from ctypes import cast, POINTER
+    from comtypes import CLSCTX_ALL
+    from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+
+# Initialize Mediapipe
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
 mp_draw = mp.solutions.drawing_utils
 
-devices = AudioUtilities.GetSpeakers()
-interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-volume = cast(interface, POINTER(IAudioEndpointVolume))
-vol_min, vol_max = volume.GetVolumeRange()[:2]
+# Initialize volume control if on Windows
+if is_windows:
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    vol_min, vol_max = volume.GetVolumeRange()[:2]
 
 # Streamlit app setup
 st.title("Hand Gesture Volume Control")
 st.write("Control your system volume by adjusting the distance between your thumb and index finger.")
+
+if not is_windows:
+    st.warning("Volume control is only supported on Windows.")
 
 # Initialize session state for run control
 if "run" not in st.session_state:
@@ -32,13 +42,14 @@ cap = cv2.VideoCapture(0)
 # Sidebar for Volume and Display options
 with st.sidebar:
     st.header("Settings")
-    current_volume = st.slider(
-        "Current Volume",
-        value=float(volume.GetMasterVolumeLevel()),  # Set as float
-        min_value=vol_min,
-        max_value=vol_max,
-        step=0.1  # Define step as float
-    )
+    if is_windows:
+        current_volume = st.slider(
+            "Current Volume",
+            value=float(volume.GetMasterVolumeLevel()),
+            min_value=vol_min,
+            max_value=vol_max,
+            step=0.1
+        )
     display_hands = st.checkbox("Display Hand Landmarks")
 
 # Button to start/stop the video stream
@@ -86,19 +97,21 @@ while st.session_state["run"]:
         # Calculate length between thumb and index finger
         length = hypot(x2 - x1, y2 - y1)
 
-        # Map the length to volume range
-        vol = np.interp(length, [15, 220], [vol_min, vol_max])
-        volume.SetMasterVolumeLevel(vol, None)
+        # Map the length to volume range on Windows only
+        if is_windows:
+            vol = np.interp(length, [15, 220], [vol_min, vol_max])
+            volume.SetMasterVolumeLevel(vol, None)
 
-    # Update volume slider based on actual volume with unique key
-    st.sidebar.slider(
-        "Current Volume (Updated)",
-        value=float(volume.GetMasterVolumeLevel()),  # Set as float
-        min_value=vol_min,
-        max_value=vol_max,
-        step=0.1,  # Define step as float
-        key="updated_volume_slider"
-    )
+    # Update volume slider based on actual volume if on Windows
+    if is_windows:
+        st.sidebar.slider(
+            "Current Volume (Updated)",
+            value=float(volume.GetMasterVolumeLevel()),
+            min_value=vol_min,
+            max_value=vol_max,
+            step=0.1,
+            key="updated_volume_slider"
+        )
 
     # Display the frame in Streamlit
     frame_placeholder.image(img, channels="BGR")
