@@ -1,5 +1,5 @@
 mediapipe
-cv2
+opencv-python
 math
 ctypes
 comtypes
