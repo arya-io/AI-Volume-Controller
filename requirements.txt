@@ -1,0 +1,8 @@
+mediapipe
+cv2
+math
+ctypes
+comtypes
+pycaw
+numpy
+time
