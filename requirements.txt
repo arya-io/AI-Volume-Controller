@@ -1,6 +1,5 @@
 mediapipe
 opencv-python-headless
-ctypes
 comtypes
 pycaw
 numpy
