@@ -1,5 +1,5 @@
 mediapipe
-opencv-python
+pip install opencv-python-headless
 math
 ctypes
 comtypes
