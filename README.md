@@ -35,10 +35,7 @@ To run this project, you'll need to have Python installed on your machine. Follo
 1. Run the main script:
    ```bash
    python main.py
-2. Follow the on-screen instructions to start controlling your volume using hand gestures.
-
-## Note
-Please ensure you comply with Flipkart's terms of service when scraping their website.
+2. Increase and decrease the distance between the tip of your index finger and thumb to control the volume of the system.
 
 ## Contributing
 Contributions are welcome! If you have suggestions for improvements or features, please open an issue or submit a pull request.
